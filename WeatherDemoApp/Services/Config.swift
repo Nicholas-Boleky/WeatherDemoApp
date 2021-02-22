@@ -6,3 +6,9 @@
 //
 
 import Foundation
+
+enum Config {
+    enum AccuWeather {
+        static let apiKey = "CQU4Ruohdv9f4TqaCcAF16ADaA7GnBN1"
+    }
+}
