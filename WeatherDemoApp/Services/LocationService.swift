@@ -13,18 +13,27 @@ class LocationService: ObservableObject {
         didSet {
             if let _ = selectedLocation {
                 getCurrentCondition()
+                getHourlyForecasts()
+                getForcasts()
             }
         }
     }
     @Published var currentWeather: CurrentWeather?
+    @Published var hourlyForecasts = [CurrentWeatherHourly]()
+    @Published var forecasts = [Forecast]()
 
     var searchQuery = "" {
         didSet {
+            if searchQuery.isEmpty {
+                searchResults.removeAll()
+            }
+            else {
             searchLocation()
+        }
         }
     }
 
-    func searchLocation() {
+    private func searchLocation() {
         searchResults = []
         
         guard let query = searchQuery
@@ -80,6 +89,62 @@ class LocationService: ObservableObject {
             }
             catch let error {
                 print("🔥 Error parsing current weather: \(error.localizedDescription)")
+            }
+        }.resume()
+    }
+    private func getHourlyForecasts() {
+        guard let query = selectedLocation,
+              let url = URL (string: "http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/\(query.key)?apikey=\(Config.AccuWeather.apiKey)")
+        else { return }
+        
+        let request = URLRequest(url: url)
+        
+        URLSession.shared.dataTask(with: request) { [weak self] (data, response, error) in
+            if let error = error {
+                print(error.localizedDescription)
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            do {
+                let response = try JSONDecoder().decode([CurrentWeatherHourly].self, from: data)
+                
+                DispatchQueue.main.async {
+                    self?.hourlyForecasts = response
+                }
+            }
+            catch let error {
+                print("🔥 Error parsing current weather: \(error.localizedDescription)")
+            }
+        }.resume()
+    }
+    
+    private func getForcasts() {
+        guard let query = selectedLocation,
+              let url = URL (string: "http://dataservice.accuweather.com/forecasts/v1/daily/5day/\(query.key)?apikey=\(Config.AccuWeather.apiKey)")
+        else { return }
+        
+        let request = URLRequest(url: url)
+        print(url)
+        URLSession.shared.dataTask(with: request) { [weak self] (data, response, error) in
+            if let error = error {
+                print(error.localizedDescription)
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            do {
+                let response = try JSONDecoder().decode(ForecastResponse.self, from: data)
+                let forecasts = response.dailyForecasts
+                
+                DispatchQueue.main.async {
+                    self?.forecasts = forecasts
+                }
+            }
+            catch let error {
+                print("🔥 Error parsing 5 day forcasts: \(error.localizedDescription)")
             }
         }.resume()
     }

@@ -19,12 +19,40 @@ struct WeatherView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .edgesIgnoringSafeArea(.all)
+                        .frame(width: geo.size.width, height: geo.size.height)
                     VStack {
                         if let location = locationService.selectedLocation,
                            let weather = locationService.currentWeather {
-                            CurrentWeatherView(city: location.localizedName, weather: weather)
+                            CurrentWeatherView(city: location.localizedName,
+                                               weather: weather,
+                                               hiLoForecast: locationService.forecasts.first)
+                            
+                            Divider()
+                                .background(Color.white)
+                            
+                            HourlyForecastView(hourlyForcasts: locationService.hourlyForecasts)
+                            
+                            Divider()
+                                .background(Color.white)
+                            
+                            FiveDayForecastView(forecasts: locationService.forecasts)
+                            
+                            Spacer()
+                        }
+                        else {
+                            VStack(alignment: .center, spacing: 20) {
+                                Image(systemName: "thermometer")
+                                    .resizable()
+                                    .frame(width: 60, height: 100, alignment: .center)
+                                
+                                Text("Search for a city to display the weather")
+                            }
+                            .frame(width: geo.size.width)
+                            
+                            Spacer()
                         }
                     } //VStack
+                    .foregroundColor(.white)
                     .navigationBarItems(trailing: Button(action: {
                         self.toggleSearchLocation.toggle()
                     }, label: {

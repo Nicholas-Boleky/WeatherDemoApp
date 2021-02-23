@@ -7,6 +7,16 @@
 
 import Foundation
 
+enum IconType: String {
+    case sunny
+    case partlySunny
+    case partlyCloudy
+    case rain
+    case clear
+    case snow
+    case unknown
+}
+
 struct CurrentWeather: Codable {
     let weatherText: String
     let isDayTime: Bool
@@ -43,5 +53,45 @@ struct TemperatureValue: Codable {
     enum CodingKeys: String, CodingKey {
         case value = "Value"
         case unit = "Unit"
+    }
+}
+
+struct CurrentWeatherHourly: Codable, Identifiable {
+    var id: String? = UUID().uuidString
+    let dateTime: String
+    let iconPhrase: String
+    let temperature: TemperatureValue
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case dateTime = "DateTime"
+        case iconPhrase = "IconPhrase"
+        case temperature = "Temperature"
+    }
+    
+    var timeStr: String {
+        let dateTime = self.toDate(from: self.dateTime)
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "ha"
+        formatter.timeZone = TimeZone(abbreviation: "GMT+0:00")
+        
+        let hourString = formatter.string(from: dateTime)
+        
+        return hourString
+    }
+    
+    func toDate(from dateStr: String) -> Date {
+        let formatter = DateFormatter()
+        formatter.timeZone = TimeZone(abbreviation: "GMT+0:00")
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        
+        let date = formatter.date(from: String(dateStr.dropLast(6)))
+        
+        return date ?? Date()
+    }
+    
+    static func mock() -> CurrentWeatherHourly {
+        return CurrentWeatherHourly(dateTime: "2020-11-23T07:00:00-8:00", iconPhrase: "Clear", temperature: TemperatureValue(value: 62, unit: "F"))
     }
 }
